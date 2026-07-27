@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>九型人格测试</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23C4A882'/><circle cx='16' cy='16' r='4.5' fill='%23FBF9F6'/></svg>" />
+<style>
+  :root{
+    --bg:#F2EFEA;
+    --card:#FBF9F6;
+    --ink:#4A4540;
+    --ink-soft:#7C756C;
+    --line:#E3DCD2;
+    --accent:#C4A882;
+    --accent-soft:#EDE3D6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+    line-height:1.7;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{max-width:780px;margin:0 auto;padding:28px 20px 80px;}
+  header h1{font-size:26px;margin:0 0 6px;letter-spacing:1px;}
+  header p{margin:0;color:var(--ink-soft);font-size:14px;}
+  .intro{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;margin:20px 0;font-size:14px;color:var(--ink-soft);
+  }
+  .intro b{color:var(--ink);}
+  /* sticky progress */
+  .progress-bar{
+    position:sticky;top:0;z-index:10;background:rgba(242,239,234,.92);
+    backdrop-filter:blur(4px);padding:10px 0;margin-bottom:8px;
+  }
+  .progress-track{height:8px;background:var(--accent-soft);border-radius:99px;overflow:hidden;}
+  .progress-fill{height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .25s ease;}
+  .progress-text{font-size:12px;color:var(--ink-soft);margin-top:6px;text-align:right;}
+  /* question card */
+  .q{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;margin-bottom:12px;transition:border-color .2s;
+  }
+  .q.unanswered{border-color:#D9B8A8;}
+  .q-top{display:flex;align-items:flex-start;gap:10px;}
+  .q-num{
+    flex:0 0 auto;width:26px;height:26px;border-radius:50%;
+    background:var(--accent-soft);color:var(--ink);font-size:13px;
+    display:flex;align-items:center;justify-content:center;font-weight:600;margin-top:2px;
+  }
+  .q-text{font-size:15px;margin:0;}
+  .q-type{font-size:12px;color:var(--ink-soft);margin:6px 0 0 36px;}
+  .opts{display:flex;gap:12px;margin:12px 0 0 36px;}
+  .opt{position:relative;cursor:pointer;}
+  .opt input{position:absolute;opacity:0;width:0;height:0;}
+  .opt span{
+    display:inline-block;padding:8px 26px;border-radius:99px;
+    border:1px solid var(--line);background:#fff;font-size:14px;color:var(--ink);
+    transition:all .18s;user-select:none;
+  }
+  .opt.yes input:checked + span{background:#B8C4B0;border-color:#B8C4B0;color:#3c4636;}
+  .opt.no input:checked + span{background:#D9C3C0;border-color:#D9C3C0;color:#5a3f3b;}
+  .opt span:hover{border-color:var(--accent);}
+  /* actions */
+  .actions{display:flex;gap:14px;align-items:center;margin:24px 0 8px;}
+  .btn{
+    border:none;cursor:pointer;font-size:15px;padding:13px 34px;border-radius:99px;
+    background:var(--accent);color:#fff;font-weight:600;transition:opacity .2s;
+  }
+  .btn:hover{opacity:.9;}
+  .btn-reset{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:12px 22px;border-radius:99px;cursor:pointer;font-size:14px;}
+  .btn-reset:hover{border-color:var(--accent);color:var(--ink);}
+  .btn-all{background:#F3EEF6;border:1px solid #B8A9C9;color:#6B5B7A;padding:12px 22px;border-radius:99px;cursor:pointer;font-size:14px;font-family:inherit;}
+  .btn-all:hover{background:#E9E0F0;border-color:#9B86B5;}
+  .btn-auto{background:#B8A9C9;color:#fff;box-shadow:0 4px 14px rgba(184,169,201,.4);}
+  .btn-auto:hover{opacity:.92;}
+  /* result */
+  #result{display:none;margin-top:10px;}
+  .result-card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:22px 22px 14px;margin-top:18px;
+  }
+  .result-card h2{margin:0 0 4px;font-size:20px;}
+  .result-card .sub{color:var(--ink-soft);font-size:13px;margin:0 0 18px;}
+  .top-callout{
+    background:var(--accent-soft);border-radius:12px;padding:14px 16px;margin-bottom:20px;
+    font-size:14px;line-height:1.6;
+  }
+  .top-callout b{color:#8a6a3f;}
+  .bar-row{margin-bottom:13px;}
+  .bar-head{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:5px;}
+  .bar-name{font-weight:600;}
+  .bar-name small{font-weight:400;color:var(--ink-soft);margin-left:6px;font-size:12px;}
+  .bar-pct{color:var(--ink-soft);font-size:13px;}
+  .bar-track{height:22px;background:#EFEAE2;border-radius:99px;overflow:hidden;}
+  .bar-fill{height:100%;width:0;border-radius:99px;transition:width .9s cubic-bezier(.22,1,.36,1);}
+  .bar-meta{font-size:11px;color:var(--ink-soft);margin-top:3px;}
+  .structure{margin:18px 0 6px;}
+  .structure h3{font-size:15px;margin:0 0 12px;font-weight:600;}
+  .center-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .center-label{flex:0 0 92px;font-size:13px;color:var(--ink);}
+  .center-track{flex:1;height:16px;background:#EFEAE2;border-radius:99px;overflow:hidden;}
+  .center-fill{height:100%;width:0;border-radius:99px;transition:width .9s cubic-bezier(.22,1,.36,1);}
+  .center-val{flex:0 0 auto;font-size:12px;color:var(--ink-soft);min-width:42px;text-align:right;}
+  .structure-text{background:var(--accent-soft);border-radius:12px;padding:14px 16px;margin-top:6px;font-size:14px;line-height:1.6;}
+  .structure-text b{color:#8a6a3f;}
+  .bar-desc{font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.5;}
+  /* deep reading */
+  .deep{margin-top:26px;}
+  .deep-title{font-size:16px;font-weight:600;margin:0 0 14px;color:var(--ink);display:flex;align-items:center;gap:8px;}
+  .deep-title::before{content:"";width:4px;height:16px;background:var(--accent);border-radius:2px;display:inline-block;}
+  .deep-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px;}
+  .deep-card.soft{background:var(--accent-soft);border-color:transparent;}
+  .deep-card h4{margin:0 0 14px;font-size:15px;font-weight:600;}
+  .deep-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .deep-item .k{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:4px;letter-spacing:.3px;}
+  .deep-item .v{font-size:14px;line-height:1.65;color:var(--ink);}
+  .deep-comfort{font-size:14px;line-height:1.75;color:#6a5a4a;}
+  .deep-comfort b{color:#8a6a3f;}
+  .wing-line{font-size:14px;line-height:1.7;color:var(--ink);}
+  .wing-tag{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px 14px;font-size:13px;font-weight:600;color:var(--accent);margin-bottom:10px;}
+  .elas-line{font-size:14px;line-height:1.7;color:var(--ink);}
+  .sig{margin-top:6px;font-size:12px;color:var(--ink-soft);font-style:italic;}
+  .quote-banner{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:8px;padding:12px 14px;font-size:15px;line-height:1.7;color:#6a5a4a;margin-bottom:14px;font-style:italic;}
+  .profile{margin-top:4px;}
+  .profile-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);}
+  .profile-row:last-child{border-bottom:none;}
+  .profile-k{flex:0 0 88px;font-size:13px;font-weight:600;color:var(--accent);padding-top:1px;}
+  .profile-v{flex:1;font-size:14px;line-height:1.65;color:var(--ink);}
+  .disclaimer{margin-top:18px;font-size:12px;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:12px;}
+  #empty-msg{display:none;background:#F7E9E4;border:1px solid #E6C9BE;color:#7a4a3c;border-radius:12px;padding:14px 16px;font-size:14px;margin-top:8px;}
+  /* 移动端优化 */
+  @media (max-width:600px){
+    .wrap{padding:20px 14px 64px;}
+    header h1{font-size:22px;}
+    header p{font-size:13px;}
+    .intro{font-size:13px;padding:14px;}
+    .q{padding:14px;}
+    .q-text{font-size:14px;}
+    .q-type{margin-left:0;}
+    /* 是/否 全宽、利于拇指点按 */
+    .opts{margin:12px 0 0 0;gap:10px;}
+    .opts .opt{flex:1;}
+    .opt span{display:block;width:100%;text-align:center;padding:12px 0;font-size:15px;}
+    .opt input:active + span{transform:scale(.97);}
+    /* 操作按钮：换行 + 主按钮优先占满整行 */
+    .actions{flex-wrap:wrap;gap:10px;}
+    .actions .btn,.actions .btn-reset,.actions .btn-all,.actions .btn-auto{
+      flex:1 1 calc(50% - 10px);text-align:center;padding:14px 8px;font-size:14px;
+    }
+    .actions #submitBtn{order:-1;flex-basis:100%;}
+    /* 结果区留白收紧 */
+    .result-card{padding:18px 14px 8px;}
+    .top-callout{font-size:13px;padding:12px;}
+    .structure-text{font-size:13px;}
+    .deep-card{padding:16px 14px;}
+    .deep-grid{gap:10px;}
+    .profile-k{flex-basis:72px;}
+    .center-label{flex-basis:74px;}
+    .bar-name small{display:block;margin:2px 0 0;}
+    .progress-text{font-size:11px;}
+  }
+  @media (max-width:380px){
+    .deep-grid{grid-template-columns:1fr;}
+    .actions .btn,.actions .btn-reset,.actions .btn-all,.actions .btn-auto{flex-basis:100%;}
+  }
+</style>
+<script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
+<script>
+(function(){
+  try{
+    var beacon=new BeaconAction({
+      appkey:'0WEB06U85YBSLJNL',
+      versionCode:'1.0.0',
+      channelID:'share',
+      delay:1000,
+      sessionDuration:30*60*1000,
+      isOversea:false,
+      needReportRqdEvent:false
+    });
+    beacon.onDirectUserAction('preview_page_view',{
+      'url':location.href,
+      'referrer':document.referrer,
+      'title':document.title,
+      'sandbox_id':'fc8352d3bcac4527b917d64d1d8233da'
+    });
+  }catch(e){}
+})();
+</script></head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>九型人格测试</h1>
+    <p>10 分钟了解你的性格底色 · 发现你的天赋与盲区 · 获得专属人格解读与成长建议</p>
+  </header>
+
+  <div class="intro">
+    下面共有 <b>108</b> 个性格描述，请凭第一直觉判断「是否符合你自己」，在每题下勾选
+    <b>是</b> 或 <b>否</b>。提交后系统会按答案统计你在九种人格类型中的占比。<br>
+    <span style="font-size:13px;">※ 结果仅供参考，深入了解需结合长期自我觉察。</span>
+  </div>
+
+  <div id="savedBanner" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;background:#EDE3D6;border:1px solid #DBC9B0;border-radius:12px;padding:12px 16px;margin:16px 0;font-size:14px;color:#5a5049;">
+    <span style="flex:1;min-width:180px;">📌 已找到你上次的作答记录，可随时查看结果，无需重新答题。</span>
+    <button id="viewSavedBtn" class="btn-all">查看上次结果</button>
+    <button id="restartBtn" class="btn-reset">重新测试</button>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-track"><div class="progress-fill" id="pfill"></div></div>
+    <div class="progress-text" id="ptext">已答 0 / 108</div>
+  </div>
+
+  <div id="quiz"></div>
+
+
+  <div id="empty-msg">你还没有勾选任何「是」——至少选一项符合自己的描述，才能算出占比哦。</div>
+
+  <section id="result">
+    <div class="result-card">
+      <h2>你的人格占比</h2>
+      <p class="sub">柱状图按「符合描述数」在全部「是」中的占比排序（合计 100%）</p>
+      <div class="top-callout" id="topCallout"></div>
+      <div class="structure" id="structure">
+        <h3>人格结构 · 三中心分布</h3>
+        <div id="centers"></div>
+        <div class="structure-text" id="structureText"></div>
+      </div>
+      <h3 style="margin-top:24px;">全部 9 型相关度总览</h3>
+      <div id="bars"></div>
+      <div class="deep" id="deep"></div>
+      <div style="text-align:center;margin:12px 0 2px;">
+        <button class="btn-all" id="moreBtn" style="display:none;">🔍 查看相关性较高的另外两个型</button>
+      </div>
+      <div id="moreTypes" style="display:none;">
+        <h3 style="margin-top:16px;">相关性较高的另外两个型</h3>
+        <div id="moreCards"></div>
+      </div>
+      <div class="disclaimer" style="text-align:center;font-size:14.5px;color:#7C756C;border-top:1px dashed var(--line);padding-top:20px;line-height:2;">
+        <span style="font-style:italic;">「性格不是你的错，也不是你的命——<br>它只是你早年学会的、用来保护自己应对世界的一套习惯。」</span><br>
+        <span style="font-size:12px;color:#A89E93;">——海伦·帕尔默《九型人格》</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const typeInfo = {
+  1:{name:"完美型", label:"改革者", color:"#C9A9A6", desc:"重原则、讲对错，追求完善与秩序，对自己和他人都高标准。",
+     fear:"害怕犯错、变坏、被指责。", desire:"渴望正直良善，把事情『做对』。",
+     gift:"你心里有一把内在标尺，能推动事情变好——责任心与判断力是稀缺资产。",
+     pressure:"压力下你变得苛责（滑向4号），对自己和他人都更挑剔，陷入『全有或全无』。",
+     comfort:"你已经足够好了。世界不需要你永远正确——允许自己『差不多就行』不是堕落，是放过。",letter:"你心里那把尺子，既是旁人羡慕的操守，也是你最难放过自己的地方。在《九型人格》中，你一生都在回答：我够不够好、够不够对？你害怕出错，于是用高标准守护自己，却常把这份严苛转向自己——仿佛只有完美才配被爱。<br><br>请看见：你为做对的事付出的努力本身就有价值，不必等结果无瑕才肯肯定自己。成长的方向，不是放下原则，而是学会对小小的失误微笑——允许差不多也是一种完成。试着把对自己的批评，翻译成对自己的慈悲：你值得被善待，尤其是被你自己。今晚挑一件不够完美的小事，故意放过它，那不是堕落，是把自己从尺子里暂时解放出来。",
+     full:{quote:"只要事情还是对的，世界就没有失控。",
+       figures:"甘地、乔布斯（早期）、科比·布莱恩特——把标准活成信仰的人。",
+       bright:"原则性强、极度负责，是推动事情变好的那股劲；可信赖，有洁癖般的品质感。",
+       dark:"对自己和他人都苛刻，非黑即白；压抑愤怒，活得紧绷，容易在『不够好』里自我攻击。",
+       cause:"童年往往被高标准的爱绑定——『做对了才被认可』，于是把完美当成安全的入场券。",
+       love:"爱得含蓄克制，多用行动而非言语；难以接纳关系里的瑕疵，怕失控也怕被看穿脆弱。",
+       work:"质量把关者、流程优化者——适合需要标准、精度与原则感的岗位，是团队的底线。",
+       fix:"练习在『足够好』时就停手；把对自己的批评，转成对自己的慈悲。"}},
+  2:{name:"给予型", label:"助人者", color:"#A3B8CC", desc:"热心、同理，通过付出与关怀获得被需要的感觉。",
+     fear:"害怕不被需要、不值得被爱。", desire:"渴望被爱、被需要。",
+     gift:"你读得懂别人的情绪，能让人感到被接住——这是稀缺的温柔力量。",
+     pressure:"压力下你变强势（滑向8号），用『我都是为你好』掩盖自己的需求。",
+     comfort:"你不必靠付出来证明价值。你本身就被爱——不是因为你做了什么，而是因为你就是你。",letter:"你总在问「你需要我吗？」——因为被需要，才觉得自己的存在有意义。在《九型人格》中，你最早学会的功课是：爱是要挣来的，不是本来就在。于是你成为最温柔的那双手，把别人的需要放在自己前面，却常在深夜问：有人看见我吗？<br><br>请记住，你的价值不取决于你做了多少。你本身就被爱，不是因为你付出，而是因为你就是你。成长，是从照顾别人里分出一点回到自己：承认我也有需要不是自私，是诚实；先把自己填满，给出来的才是滋养而非消耗。试着一周里为自己想做而非别人需要做一件小事。你不必时刻在场，你值得被安静地爱着，不为任何事。",
+     full:{quote:"你需不需要我？被需要，我才觉得自己有价值。",
+       figures:"特蕾莎修女、奥普拉、雷锋式人物——把『被需要』活成使命的人。",
+       bright:"共情力强、温暖、善解人意，能让人瞬间安心；是天然的关系黏合剂。",
+       dark:"习惯讨好、边界模糊；用自己的付出『绑架』关系，却悄悄忽略真实的自己。",
+       cause:"童年学会用『照顾者』角色换取关注，以为爱是需要挣来的，而非本来就在。",
+       love:"过度付出以维系被爱，很难坦然接受被照顾；给得多，要得羞。",
+       work:"客户成功、服务、HR、公益——任何以人为核心、需要温度的连接岗。",
+       fix:"承认自己的需求同样重要；先把自己填满，给出来的才是滋养而非消耗。"}},
+  3:{name:"成就型", label:"成就者", color:"#B8C4B0", desc:"目标导向、高效，渴望被认可，擅长自我包装与冲刺。",
+     fear:"害怕失败、没有价值。", desire:"渴望被肯定、有成就。",
+     gift:"你懂得把事做成，目标感与执行力让团队愿意跟随。",
+     pressure:"压力下你变得敷衍（滑向9号），用忙碌掩饰空虚，或过度包装人设。",
+     comfort:"你的价值不在奖牌上。摘下面具喘口气，那个『不经营』的你，同样值得喜欢。",letter:"你像一台永动机，把人生过成不断刷新的成绩单。在《九型人格》中，你最深的怕是一事无成，于是早早把「我做了什么」和「我是谁」画了等号——怕一旦停下、一旦不优秀，就不值得被爱。<br><br>你的价值不在奖牌上，也不在别人眼里那个光鲜的版本里。那个不经营、不冲刺、只是安静坐着的你，同样值得喜欢。成长的方向，是练习摘下面具喘口气，允许自己不够强也安全。试着做一件毫无产出的事——发呆、散步、不为朋友圈——并告诉自己这样也算过了充实的一天。真正的联结发生在你卸下能干之后：当你愿意说这件事我不行，反而有人靠近。你不必永远赢，才配被留下。",
+     full:{quote:"人生最大的悲剧就是一事无成。",
+       figures:"马斯克、汤姆·克鲁斯、麦当娜——把人生过成代表作的人。",
+       bright:"目标感强、高效、适应力极佳，能激励团队，是把事『做成』的发动机。",
+       dark:"功利、人设化，害怕暴露无能；表面光鲜，内里偶有空虚。",
+       cause:"童年被『成就』而非『本人』认可，于是把自我价值等同于产出。",
+       love:"容易把关系当项目经营，难展现脆弱；怕『不够优秀』就不被爱。",
+       work:"销售、创业者、业务负责人——业绩与影响力的天然发动机。",
+       fix:"区分『我做了什么』和『我是谁』；允许自己不优秀，也值得被爱。"}},
+  4:{name:"浪漫型", label:"个人主义者", color:"#D4C5B5", desc:"感性、独特，追求深层情感、美感与意义。",
+     fear:"害怕平淡、失去独特性、被淹没。", desire:"渴望意义、被深刻理解。",
+     gift:"你的情感深度与审美直觉，能看见别人看不见的层次。",
+     pressure:"压力下你更忧郁（滑向2号），渴望被拯救，却推开会靠近的人。",
+     comfort:"你的特别不需要靠痛苦来证明。平凡的日子也可以盛放，你本就与众不同。",letter:"你心里住着一个总在回望的人，总觉得真正想要的那个永远差一点。在《九型人格》中，你把独特当成与世界的脐带——怕平凡、怕被淹没，于是用深情和缺憾证明自己的存在。<br><br>请知道，你的特别从不靠痛苦来盖章。你本就与众不同，不需要用失去来证明拥有过。成长的方向，是把手从「未完成的那个版本」上松开，安在当下已经拥有的温度里。试着今天记录三件普通却真好的小事，不比较、不浪漫化。你的深度是礼物，但平凡的日子也能盛放。你值得被理解，而理解常常发生在你停止追逐、开始停留的此刻。你渴望灵魂共振，这没错，但共振也发生在两个都不完美的普通人之间。",
+     full:{quote:"有些东西我永远也得不到，而我偏偏最渴望它。",
+       figures:"梵高、王菲、约翰尼·德普——把独特活成标志的人。",
+       bright:"情感深邃、审美独到、创造力强，真诚且不流俗，能看见别人看不见的层次。",
+       dark:"容易自怜、嫉妒，沉溺于『缺失』；情绪起伏大，在关系里追逐未完成。",
+       cause:"童年常感到自己『与众不同却又被遗漏』，把独特当成与世界的联结方式。",
+       love:"渴望灵魂共振，得到后反而失落；总在追逐未完成的那个版本。",
+       work:"艺术、设计、品牌、内容——为产品注入情感价值的创造者。",
+       fix:"在平凡里找意义；停止和别人比较，安于当下已经拥有的。"}},
+  5:{name:"观察型", label:"探索者", color:"#B8A9C9", desc:"冷静、好奇，重视知识、边界与独立空间。",
+     fear:"害怕被过度索取、无力应对世界。", desire:"渴望胜任、独立、内心安宁。",
+     gift:"你的洞察与抽离视角，能把混乱拆成结构——是天生的分析大脑。",
+     pressure:"压力下你躲进头脑（滑向7号），用资讯和计划回避情绪，显得疏离。",
+     comfort:"你的『慢半拍』是认真，不是怯懦。守住边界、先喂饱好奇心，本就是你的生存智慧。你值得被理解，而非被催促。",letter:"你习惯先退后一步，把世界看清楚再决定是否靠近——这不是冷漠，是你守护内心安宁的方式。在《九型人格》中，你最深的怕是被掏空：怕时间、精力、情感被过度索取，于是在私人空间里自给自足，把不依赖当成安全。<br><br>请看见，你的洞察与抽离是稀缺的天赋，你替很多人把混乱理成了结构。但成长的方向，是相信被靠近不等于被耗尽——分享想法不会让你变少，付出情感也不会让你失控。试着主动对一个人说一句真实的感受，哪怕很小。你不必永远准备好才开口。你的慢半拍是认真，不是怯懦；你值得被理解，而非被催促。守住边界的同时，也留一扇门，让别人进来坐坐。",
+     full:{quote:"只要我还看得懂这个世界，就不会被它吞没。",
+       figures:"爱因斯坦、比尔·盖茨、弗吉尼亚·伍尔夫——在精神世界里开疆拓土的独立思考者。",
+       bright:"洞察深刻、客观冷静，是天生的系统化思考者；不轻易表态，一旦开口往往切中要害。",
+       dark:"情感疏离，在时间和情绪上都很『吝啬』；习惯退守私人空间，易被误读为冷漠孤僻。",
+       cause:"童年常感到被侵入或情感被剥夺，于是退守内心世界自给自足，把『不依赖』当安全。",
+       love:"用距离换安全，怕亲密吞噬自我；慢热、不擅长表达需求，认定后却安静守候。",
+       work:"分析师、研究员、策略智囊——适合幕后『大脑』，把复杂理成结构，而非冲在一线。",
+       fix:"试着把囤积的知识与想法拿出来分享；允许自己被靠近而不失控，付出情感不等于被耗尽。"}},
+  6:{name:"怀疑型", label:"忠诚者", color:"#C4A882", desc:"谨慎、忠诚，寻求安全与可依赖的依靠。",
+     fear:"害怕失去依靠、被遗弃、出错。", desire:"渴望安全、被支持。",
+     gift:"你的风险预判与忠诚，是团队最稳的底座。",
+     pressure:"压力下你慌乱（滑向3号），要么过度焦虑，要么强行逞强。",
+     comfort:"你已经比想象中安全。不是所有未知都是威胁——相信自己的判断，你比以为的更可靠。",letter:"你像一台永远在扫描风险的雷达，忠诚又警觉，是身边人最稳的底座。在《九型人格》中，你最深的怕是没有可以依靠的人，于是学会先怀疑、再信任来护住自己——可这往往让你脑补出根本不会发生的灾难。<br><br>请听见，你已经比想象中安全。不是所有未知都是威胁，也不是每次沉默都代表被抛弃。成长的方向，是学会区分真实的风险与脑补的剧本——当焦虑上来，问自己证据呢？相信你自己的判断，你比以为的更可靠。也试着对一个人说其实我有点不确定，脆弱被说出口，反而换来真正的支持。你不必独自扛着所有万一，你值得被接住。",
+     full:{quote:"我会忠于值得我忠诚的人——但先让我确认你可靠。",
+       figures:"汤姆·汉克斯、罗伯特·德尼罗、哈利·波特（虚构）——忠诚又多疑的守护者原型。",
+       bright:"忠诚、谨慎、风险预判极强，是团队里最稳的底座与定心丸。",
+       dark:"多疑、焦虑、犹豫不决；易屈从权威，或在被逼时突然反叛。",
+       cause:"童年缺乏稳定可依靠的对象，学会『先怀疑再信任』来保护自己。",
+       love:"需要反复确认安全感，患得患失；信任一旦建立，便掏心掏肺。",
+       work:"风控、合规、项目管理——为团队兜底的『安全网』角色。",
+       fix:"区分『真实风险』与『脑补的灾难』；相信自己的判断，你比以为的更稳。"}},
+  7:{name:"享乐型", label:"热情者", color:"#9FB1B5", desc:"乐观、爱探索，追求新鲜刺激与生活乐趣。",
+     fear:"害怕被束缚、痛苦、无聊。", desire:"渴望自由、快乐、无限可能。",
+     gift:"你的好奇与乐观，能把死局看出新路，是气氛与灵感的发动机。",
+     pressure:"压力下你焦虑（滑向1号），用更多计划掩盖深层不安。",
+     comfort:"你不必永远阳光。允许自己偶尔丧、偶尔沉下来，快乐才不会被透支。",letter:"你把人生当一张永远刷不完的游乐场门票，怕错过任何好玩的事。在《九型人格》中，你最早学会的生存策略是不去感受难过——用新鲜、用计划、用笑声，把痛苦挡在门外。可快乐若只靠逃避维持，终会被透支。<br><br>请允许自己偶尔不阳光：丧、沉、无聊，都是人之常情，不是失败。成长的方向，是把一件事做深做透——比追逐十个开始更有重量。试着陪自己走完一段不好玩却真实的路，比如坐下来面对一个一直躲的情绪。你不必永远当那个开心果；真实的你，哪怕偶尔灰暗，也值得被喜欢。快乐是你本来的样子，不是你表演出来的状态。",
+     full:{quote:"我不打算错过任何好玩的事。",
+       figures:"理查德·布兰森、金·凯瑞、莱昂纳多——把人生当游乐场的人。",
+       bright:"乐观、好奇、点子多，是气氛与灵感的发动机；再死的局也能看出新路。",
+       dark:"逃避痛苦、三分钟热度、不喜承诺，容易浮于表面。",
+       cause:"童年用快乐回避压抑或痛苦，学会『不去感受难过』的生存策略。",
+       love:"怕被关系困住，用新鲜感保持距离；开心时很黏，沉闷时想逃。",
+       work:"创意、策划、BD——点子制造机与可能性勘探者。",
+       fix:"允许自己体验不快乐；把一件事做深做透，比追逐十个开始更有重量。"}},
+  8:{name:"领导型", label:"挑战者", color:"#C2A8B0", desc:"果断、直接，保护自我与所爱，不喜被控制。",
+     fear:"害怕被控制、被伤害。", desire:"渴望自主、掌控自己的人生。",
+     gift:"你的力量感与保护欲，能让弱小者安心，是天然的定海神针。",
+     pressure:"压力下你更硬（滑向5号），用冷漠和掌控推开靠近的人。",
+     comfort:"示弱不是认输。你不需要一直扛着——把后背交给信任的人，才是真正的强大。",letter:"你生来就想掌控局面，因为太早懂得强者才安全。在《九型人格》中，你把脆弱当成破绽，用强硬护住心里那个怕受伤害的小孩——可越用力推开，越难被真正靠近。<br><br>请知道，示弱不是认输，把控制权分出去是信任，也是放过自己。你不需要一直扛着所有人。成长的方向，是在信任的人面前卸下铠甲，说一句其实我也会怕——那不会让你变小，只会让你更真。你的力量本用来保护所爱，而保护的前提，是先允许自己被保护。试着把后背交给一个你信得过的人。真正的强大是刚柔并济；你柔软的那面，从来不是弱点。",
+     full:{quote:"我是天生的领导者，我绝不软弱。",
+       figures:"Lady Gaga、拿破仑、特朗普——生来就要掌控局面的人。",
+       bright:"直接、有担当、保护欲强，行动力爆棚，是危机里的定海神针。",
+       dark:"控制欲强、好斗，习惯压制脆弱；不自觉用强硬掩盖柔软。",
+       cause:"童年早早就懂『强者生存』，用强硬护住内心那个怕受伤害的小孩。",
+       love:"占有式地保护对方，却难示弱；怕被看穿温柔，于是用强势包裹。",
+       work:"创始人、指挥官、危机处理者——天生的掌舵与破局角色。",
+       fix:"示弱不是认输；把控制权分出去，是信任，也是放过自己。"}},
+  9:{name:"调停型", label:"和平者", color:"#A9B5A0", desc:"温和、包容，追求和谐、稳定与无冲突。",
+     fear:"害怕冲突、被撕裂、失去联结。", desire:"渴望和谐、内心平静。",
+     gift:"你的包容与稳定，能让所有人松一口气，是关系里的黏合剂。",
+     pressure:"压力下你消极抗拒（滑向6号），用拖延和麻木回避该面对的事。",
+     comfort:"你的平静很珍贵，但也别拿它埋自己。你的需求同样重要——说出来不会破坏和谐，只会让关系更真。",letter:"你是人群里最温和的那阵风，总把不惹事当成被爱的前提。在《九型人格》中，你习惯把真实的需求藏到所有人满意之后，用都行、随便维持表面的和平——可委屈攒久了，会变成沉默的被动攻击，或突然的抽离。<br><br>请听见，你的平静很珍贵，但别拿它埋自己。你的需求同样重要，说出来不会炸毁关系，反而让关系更真。成长的方向，是找回自己的声音——从小事开始：今天想吃什么、想去哪，先说你的答案，再听别人的。冲突不必然破坏联结，真实比讨好更长久。你值得被爱，不是因为你顺从，而是因为你就是你。试着这一次，先选你要的，再谈妥协。",
+     full:{quote:"我宁愿息事宁人，维持表面的和平。",
+       figures:"奥巴马、荣格、阿甘（虚构）——温和却自有力量的人。",
+       bright:"温和、包容、情绪稳定，是关系里的缓冲垫，能让所有人松一口气。",
+       dark:"拖延、盲从、习惯性压抑自我；表面无害，积压久了会变被动攻击。",
+       cause:"童年学会『不惹事才被爱』，把自我需求默默藏到所有人都满意之后。",
+       love:"容易融化在关系里，难表达真实需求；怕冲突，委屈自己换太平。",
+       work:"协调、支持、运营——让团队顺畅运转的『润滑剂』角色。",
+       fix:"找回自己的声音；冲突不必然破坏关系，真实比讨好更长久。"}}
+};
+
+// 深度解读生成器
+function buildDeep(rows, centerPct, centerOrder){
+  const deep = document.getElementById('deep');
+  const top = rows[0], low = rows[rows.length-1];
+  const ti = typeInfo;
+  const t = top.t;
+  // 主型特质对应「自责词」
+  const blame = {5:"想太多",6:"谨慎多疑",4:"情绪化",8:"太强硬",1:"太较真",2:"总在付出",3:"停不下来",7:"太飘忽",9:"太回避"}[t]||"苛刻待己";
+  const centerWord = centerOrder[0]==='brain'?'先理解、再判断、再行动':(centerOrder[0]==='heart'?'重关系与被认可':'先做了再说、凭直觉');
+  deep.innerHTML =
+    '<div class="deep-title">深度解读</div>'+
+    '<div class="deep-card">'+
+      '<h4>你的主型 · '+top.t+' 号 '+ti[t].name+'（'+ti[t].label+'）</h4>'+
+      '<div class="deep-grid">'+
+        '<div class="deep-item"><div class="k">核心恐惧</div><div class="v">'+ti[t].fear+'</div></div>'+
+        '<div class="deep-item"><div class="k">核心渴望</div><div class="v">'+ti[t].desire+'</div></div>'+
+        '<div class="deep-item"><div class="k">你的天赋</div><div class="v">'+ti[t].gift+'</div></div>'+
+        '<div class="deep-item"><div class="k">压力下的你</div><div class="v">'+ti[t].pressure+'</div></div>'+
+      '</div>'+
+      '<div class="deep-comfort" style="margin-top:16px;">'+ti[t].comfort+'</div>'+
+    '</div>'+
+    '<div class="deep-card">'+
+      '<h4>完整人格画像</h4>'+
+      '<div class="quote-banner">'+ti[t].full.quote+'</div>'+
+      '<div class="profile">'+
+        '<div class="profile-row"><div class="profile-k">代表人物</div><div class="profile-v">'+ti[t].full.figures+'</div></div>'+
+        '<div class="profile-row"><div class="profile-k">性格闪光点</div><div class="profile-v">'+ti[t].full.bright+'</div></div>'+
+        '<div class="profile-row"><div class="profile-k">性格黑暗点</div><div class="profile-v">'+ti[t].full.dark+'</div></div>'+
+        '<div class="profile-row"><div class="profile-k">可能性成因</div><div class="profile-v">'+ti[t].full.cause+'</div></div>'+
+        '<div class="profile-row"><div class="profile-k">情感模式</div><div class="profile-v">'+ti[t].full.love+'</div></div>'+
+        '<div class="profile-row"><div class="profile-k">职场角色</div><div class="profile-v">'+ti[t].full.work+'</div></div>'+
+        '<div class="profile-row"><div class="profile-k">执念修正</div><div class="profile-v">'+ti[t].full.fix+'</div></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="deep-card soft">'+
+      '<h4>给你的一封信</h4>'+
+      '<div class="deep-comfort">'+ti[t].letter+'<br><br>回到你的结果——你不必为「'+blame+'」自责，'+ti[low.t].name+'偏低也不是缺陷，只是能量有别的去向；你的底盘在<b>'+centerWord+'</b>，这是你与世界相处的方式。你愿意花108道题了解自己，这件事本身就值得肯定。慢慢来，你已经在路上了。</div>'+
+    '</div>';
+  deep.style.display='block';
+}
+
+const questionTexts = [
+"","我很容易迷惑。","我不想成为一个喜欢批评的人，但很难做到。","我喜欢研究宇宙的道理、哲理。",
+"我很注意自己是否年轻，因为那是我找乐子的本钱。","我喜欢独立自主，一切都靠自己。","当我有困难的时候，我会试着不让人知道。",
+"被人误解对我而言是一件十分痛苦的事。","施舍比接受会给我更大的满足感。","我常常试探或考验朋友、伴侣的忠诚。",
+"我常常设想最糟糕的结果而使自己陷入苦恼中。","我看不起那些不像我一样坚强的人，有时我会用种种方式羞辱他们。",
+"身体上的舒适对我非常重要。","我能触碰生活中的悲伤和不幸。","别人不能完成他的分内事，会令我感到失望和愤怒。",
+"我时常拖延问题，不去解决。","我喜欢有戏剧性、多姿多彩的生活。","我认为自己非常不完善。",
+"我对感官的需求特别强烈，喜欢美食、服装、身体的触觉刺激，并纵情享乐。","当别人请教我一些问题，我会巨细无遗地分析得很清楚。",
+"我习惯推销自己，从不觉得难为情。","有时我会放纵自己，做出不理智的事情。","帮助不了别人会让我觉得痛苦。",
+"我不喜欢别人问我广泛、笼统的问题。","在某方面我有放纵的倾向（例如食物、药物等）。","我宁愿适应别人，包括我的伴侣，而不会反抗他们。",
+"我最不喜欢的一件事就是虚伪。","我知错能改，但由于执着好强，周围的人还是感觉到有压力。","我常觉得很多事情都很好玩，很有趣，人生真是快乐。",
+"我有时很欣赏自己有权威，有时却又优柔寡断，依赖别人。","我习惯付出多于接受。","面对威胁时，我一是变得焦虑，二是对抗迎面而来的危险。",
+"我通常是等别人来接近我，而不是主动去接近他们。","我喜欢当主角，希望得到大家的关注。","别人批评我，我也不会回应和解释，因为我不想发生任何争执与冲突。",
+"我有时期待别人的指导，有时却忽略别人的忠告，径直去做我想做的事。","我经常忘记自己的需要。","在重大危机中，我通常能克服对自己的质疑和内心的焦虑。",
+"我是一个天生的推销员，说服别人对我来说是一件容易的事。","我不相信一个我一直都无法了解的人。","我喜欢依惯例行事，不大喜欢改变。",
+"我很在乎家人，在家中表现得忠诚和包容。","我被动而且优柔寡断。","我很有包容力，彬彬有礼，但跟人的感情互动不深。",
+"我沉默寡言，好像不会关心别人似的。","当我沉浸在工作中或自己擅长的领域时，别人会觉得我冷酷无情。","我常常保持警觉。",
+"我不喜欢要对人尽义务的感觉。","如果不能完美地表态，我宁愿不说。","我的计划比我实际完成的还要多。",
+"我雄心勃勃，喜欢挑战和登上高峰的滋味。","我倾向于独断专行并自己解决问题。","我很多时候感到被遗弃。",
+"我常常表现得十分忧郁的样子，充满痛苦而且内向。","初见陌生人时，我会表现得很冷漠、高傲。","我的面部表情严肃而生硬。",
+"我很飘忽，常常不知自己下一刻想要什么。","我常对自己很挑剔，期望不断改正自己的缺点，从而成为一个完美的人。","我非常敏感，并经常怀疑那些总是很快乐的人。",
+"我做事有效率，会找捷径，模仿力特别强。","我讲理，注重实用。","我有很强的创造天分和想象力，喜欢将事情重新整合。",
+"我不要求得到很多的关注。","我喜欢每件事情都井然有序，但别人会以为我过分执着。","我渴望有完美的心灵伴侣。",
+"我常夸耀自己，对自己的能力十分有信心。","如果周围的人行为太过分，我一定会让他难堪。","我性格外向，精力充沛，喜欢不断追求成功，这使我的自我感觉十分良好。",
+"我是一位忠实的朋友和伙伴。","我知道如何让别人喜欢我。","我很少看到别人的功劳和好处。",
+"我很容易看到别人的功劳和好处。","我嫉妒心强，喜欢跟别人比较。","我对别人做的事总是不放心，批评一番后，会自己动手再做。",
+"别人会说我常带着面具做人。","有时我会激怒对方，引来莫名其妙地争吵，其实我只是想试探对方爱不爱我。","我会极力保护我所爱的人。",
+"我常常刻意保持兴奋的情绪。","我只喜欢与有趣的人为友，对一些无聊的人懒得交往，即使他们看起来很有深度。","我常往外跑，四处帮助别人。",
+"我有时会因讲求效率而牺牲完美和原则。","我似乎不太懂得幽默，没有弹性。","我待人热情而有耐性。",
+"在人群中我时常感到害羞和不安。","我喜欢做事高效率，讨厌拖泥带水。","帮助别人达到快乐和成功是我最大的成就。",
+"付出时，别人若不欣然接受，我便会有挫败感。","我的肢体硬邦邦的，不习惯别人热情的付出。","我对大部分的社交活动不太感兴趣，除非那是我熟识的和喜爱的人。",
+"很多时候我会有强烈的寂寞感。","人们很乐意向我表白他们所遭遇的问题。","我不但不会说甜言蜜语，而且别人会觉得我唠叨不停。",
+"我常担心自由被剥夺，因此不爱讲承诺。","我喜欢告诉别人我所做的事和所知的一切。","我很容易认同别人为我所做的事和所知的一切。",
+"我要求光明正大，为此不惜与人发生冲突。","我很有正义感，有时会支持不利的一方。","我注重小节而效率不高。",
+"我容易感到沮丧和麻木，更多于愤怒。","我不喜欢那些侵略性或过度情绪化的人。","我非常容易情绪化，一天的喜怒哀乐多变。",
+"我不想别人知道我的感受与想法，除非我主动告诉他们。","我喜欢刺激和紧张的关系，而不是确定和依赖的关系。","我很少用心去感受别人的心情，只喜欢说说俏皮话和笑话。",
+"我是循规蹈矩的人，秩序对于我十分有意义。","我很难找到一种我真正感到被爱的关系。","假如我想要结束一段关系，我不是直接告诉对方而是激怒他，让他离开我。",
+"我温和平静，不自夸，不爱与人竞争。","我有时善良可爱，有时又粗野暴躁，很难捉摸。"
+];
+
+const typeMap = {
+  1:[2,14,55,57,60,63,73,81,87,91,97,102,104,106],
+  2:[6,8,22,30,69,71,79,82,85,86,89,90],
+  3:[20,33,38,59,65,67,70,72,74,77,80,93],
+  4:[7,13,17,52,53,54,56,58,61,64,100,105],
+  5:[3,19,23,32,42,43,47,48,51,83,88,99,101],
+  6:[9,10,26,29,31,35,37,45,46,68,75],
+  7:[4,16,18,21,28,49,78,92,103],
+  8:[5,11,24,27,40,44,50,66,76,84,95,96],
+  9:[1,12,15,25,34,36,39,41,62,94,98,107,108]
+};
+
+const idToType = {};
+Object.entries(typeMap).forEach(([t,ids])=>ids.forEach(id=>idToType[id]=+t));
+
+// build quiz
+const quiz = document.getElementById('quiz');
+for(let id=1; id<=108; id++){
+  const t = idToType[id];
+  const card = document.createElement('div');
+  card.className='q';
+  card.id='q'+id;
+  card.innerHTML =
+    '<div class="q-top">'+
+      '<div class="q-num">'+id+'</div>'+
+      '<p class="q-text">'+questionTexts[id]+'</p>'+
+    '</div>'+
+    '<div class="q-type" style="display:none;">所属类型：'+t+' 号 '+typeInfo[t].name+'（'+typeInfo[t].label+'）</div>'+
+    '<div class="opts">'+
+      '<label class="opt yes"><input type="radio" name="q'+id+'" value="yes"><span>是</span></label>'+
+      '<label class="opt no"><input type="radio" name="q'+id+'" value="no"><span>否</span></label>'+
+    '</div>';
+  quiz.appendChild(card);
+}
+
+// progress
+function updateProgress(){
+  let answered=0;
+  for(let id=1; id<=108; id++){
+    const v=document.querySelector('input[name="q'+id+'"]:checked');
+    if(v) answered++;
+  }
+  document.getElementById('pfill').style.width=(answered/108*100)+'%';
+  document.getElementById('ptext').textContent='已答 '+answered+' / 108';
+}
+quiz.addEventListener('change', e=>{
+  if(e.target.name){
+    const id=e.target.name.replace('q','');
+    document.getElementById('q'+id).classList.remove('unanswered');
+    updateProgress();
+    checkAutoSubmit();
+  }
+});
+
+// ---- 本地存储：随时查阅，无需重做 ----
+const LS_KEY='enneagram_answers_v1';
+function saveAnswers(){
+  const a={};
+  for(let id=1;id<=108;id++){
+    const v=document.querySelector('input[name="q'+id+'"]:checked');
+    if(v) a[id]=v.value;
+  }
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(a)); }catch(e){}
+}
+function loadAnswers(){
+  try{ return JSON.parse(localStorage.getItem(LS_KEY)||'null'); }catch(e){ return null; }
+}
+function clearAnswers(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} }
+
+// 从当前勾选统计
+function collectCounts(){
+  const counts={1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
+  let totalYes=0; const missing=[];
+  for(let id=1; id<=108; id++){
+    const v=document.querySelector('input[name="q'+id+'"]:checked');
+    if(!v){ missing.push(id); continue; }
+    if(v.value==='yes'){ counts[idToType[id]]++; totalYes++; }
+  }
+  return {counts, totalYes, missing};
+}
+
+// 另外两型的核心卡（恐惧/渴望/天赋/压力 + 一句释义）
+function typeCoreCard(r){
+  const ti=typeInfo[r.t];
+  const blame = {5:"想太多",6:"谨慎多疑",4:"情绪化",8:"太强硬",1:"太较真",2:"总在付出",3:"停不下来",7:"太飘忽",9:"太回避"}[r.t]||"苛刻待己";
+  return '<div class="deep-card">'
+    +'<h4>'+r.t+' 号 '+ti.name+'（'+ti.label+'） · 相关度 '+r.pct+'%（'+r.c+'/'+r.total+' 题）</h4>'
+    +'<div class="deep-grid">'
+      +'<div class="deep-item"><div class="k">核心恐惧</div><div class="v">'+ti.fear+'</div></div>'
+      +'<div class="deep-item"><div class="k">核心渴望</div><div class="v">'+ti.desire+'</div></div>'
+      +'<div class="deep-item"><div class="k">你的天赋</div><div class="v">'+ti.gift+'</div></div>'
+      +'<div class="deep-item"><div class="k">压力下的你</div><div class="v">'+ti.pressure+'</div></div>'
+    +'</div>'
+    +'<div class="deep-comfort" style="margin-top:16px;">'+ti.comfort+'</div>'
+  +'</div>'
+  +'<div class="deep-card">'
+    +'<h4>完整人格画像 · '+r.t+' 号 '+ti.name+'</h4>'
+    +'<div class="quote-banner">'+ti.full.quote+'</div>'
+    +'<div class="profile">'
+      +'<div class="profile-row"><div class="profile-k">代表人物</div><div class="profile-v">'+ti.full.figures+'</div></div>'
+      +'<div class="profile-row"><div class="profile-k">性格闪光点</div><div class="profile-v">'+ti.full.bright+'</div></div>'
+      +'<div class="profile-row"><div class="profile-k">性格黑暗点</div><div class="profile-v">'+ti.full.dark+'</div></div>'
+      +'<div class="profile-row"><div class="profile-k">可能性成因</div><div class="profile-v">'+ti.full.cause+'</div></div>'
+      +'<div class="profile-row"><div class="profile-k">情感模式</div><div class="profile-v">'+ti.full.love+'</div></div>'
+      +'<div class="profile-row"><div class="profile-k">职场角色</div><div class="profile-v">'+ti.full.work+'</div></div>'
+      +'<div class="profile-row"><div class="profile-k">执念修正</div><div class="profile-v">'+ti.full.fix+'</div></div>'
+    +'</div>'
+  +'</div>'
+  +'<div class="deep-card soft">'
+    +'<h4>给你的一封信</h4>'
+    +'<div class="deep-comfort">'+ti.letter+'<br><br>你不必为「'+blame+'」自责——这是你性格中自然的一部分。慢慢来，你已经在路上了。</div>'
+  +'</div>';
+}
+
+// ---- 渲染结果（主型优先，另外两型折叠）----
+function renderResult(counts, totalYes, doScroll){
+  const barsBox=document.getElementById('bars');
+  const emptyMsg=document.getElementById('empty-msg');
+  const result=document.getElementById('result');
+  const moreBtn=document.getElementById('moreBtn');
+  const moreTypes=document.getElementById('moreTypes');
+  barsBox.innerHTML='';
+  if(totalYes===0){
+    emptyMsg.style.display='block';
+    result.style.display='block';
+    document.getElementById('topCallout').style.display='none';
+    document.getElementById('structure').style.display='none';
+    const deep0=document.getElementById('deep'); deep0.innerHTML=''; deep0.style.display='none';
+    moreBtn.style.display='none'; moreTypes.style.display='none';
+    if(doScroll) result.scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  emptyMsg.style.display='none';
+  document.getElementById('structure').style.display='block';
+
+  // compute rows
+  const rows=[];
+  for(let t=1;t<=9;t++){
+    const c=counts[t];
+    const pct=+(c/totalYes*100).toFixed(1);
+    rows.push({t, c, total:typeMap[t].length, pct});
+  }
+  rows.sort((a,b)=>b.pct-a.pct);
+
+  // three centers
+  const centers={brain:[5,6,7], heart:[2,3,4], gut:[8,9,1]};
+  const centerNames={brain:"脑中心（思维）", heart:"心中心（情感）", gut:"腹中心（本能）"};
+  const centerColors={brain:"#B8A9C9", heart:"#C9A9A6", gut:"#A9B5A0"};
+  const centerPct={};
+  for(const k in centers){ let s=0; centers[k].forEach(t=>s+=counts[t]); centerPct[k]=+(s/totalYes*100).toFixed(1); }
+  const centerOrder=Object.keys(centers).sort((a,b)=>centerPct[b]-centerPct[a]);
+  const centersBox=document.getElementById('centers');
+  centersBox.innerHTML='';
+  centerOrder.forEach(k=>{
+    const row=document.createElement('div'); row.className='center-row';
+    row.innerHTML='<div class="center-label">'+centerNames[k]+'</div>'+
+      '<div class="center-track"><div class="center-fill" style="background:'+centerColors[k]+'"></div></div>'+
+      '<div class="center-val">'+centerPct[k]+'%</div>';
+    centersBox.appendChild(row);
+    requestAnimationFrame(()=>{ setTimeout(()=>{ row.querySelector('.center-fill').style.width=centerPct[k]+'%'; }, 60); });
+  });
+  const domText={
+    brain:"你的底盘在<b>思维中心</b>：习惯先理解、再判断、再行动。遇到事情会先抽离分析、收集信息、评估风险，不太凭一时冲动做决定。",
+    heart:"你的底盘在<b>情感中心</b>：在意关系、被认可与情感连接，许多决策背后都藏着对「关系质量」的考量。",
+    gut:"你的底盘在<b>本能中心</b>：重行动、直觉与掌控，倾向「先做了再说」，对环境变化的反应很敏捷。"
+  };
+  document.getElementById('structureText').innerHTML=domText[centerOrder[0]]+
+    ' <span style="color:#7C756C;font-size:13px;">三中心占比：脑 '+centerPct.brain+'% · 心 '+centerPct.heart+'% · 腹 '+centerPct.gut+'%。</span>';
+
+  // top callout（主型）
+  const top=rows[0];
+  const callout=document.getElementById('topCallout');
+  callout.style.display='block';
+  callout.innerHTML='<b>你的主型：'+top.t+' 号 '+typeInfo[top.t].name+'（'+typeInfo[top.t].label+'）</b><br>'+
+    typeInfo[top.t].desc+'<br><span style="color:#7C756C;font-size:13px;">相关度最高，在全部「是」中占比 '+top.pct+'%（'+top.c+'/'+top.total+' 题）。</span>';
+
+  // bars（全部9型，放在折叠区里）
+  rows.forEach(r=>{
+    const row=document.createElement('div');
+    row.className='bar-row';
+    row.innerHTML=
+      '<div class="bar-head">'+
+        '<span class="bar-name">'+r.t+' 号 '+typeInfo[r.t].name+'<small>'+typeInfo[r.t].label+'</small></span>'+
+        '<span class="bar-pct">'+r.pct+'%</span>'+
+      '</div>'+
+      '<div class="bar-track"><div class="bar-fill" style="background:'+typeInfo[r.t].color+'"></div></div>'+
+      '<div class="bar-meta">命中 '+r.c+' / '+r.total+' 题</div>'+
+      '<div class="bar-desc">'+typeInfo[r.t].desc+'</div>';
+    barsBox.appendChild(row);
+    requestAnimationFrame(()=>{ setTimeout(()=>{ row.querySelector('.bar-fill').style.width=r.pct+'%'; }, 60); });
+  });
+
+  // 主型深度解读三卡
+  buildDeep(rows, centerPct, centerOrder);
+
+  // 另外两型（相关度第 2、3 高）折叠
+  document.getElementById('moreCards').innerHTML = typeCoreCard(rows[1]) + typeCoreCard(rows[2]);
+  moreTypes.style.display='none';
+  moreBtn.style.display='inline-block';
+  moreBtn.dataset.label='🔍 查看相关性较高的另外两个型（'+rows[1].t+'号 · '+rows[2].t+'号）';
+  moreBtn.textContent=moreBtn.dataset.label;
+
+  result.style.display='block';
+  if(doScroll) result.scrollIntoView({behavior:'smooth'});
+}
+
+// 提交（自动触发：全部答完时调用）
+function doSubmit(){
+  const {counts, totalYes, missing}=collectCounts();
+  if(missing.length){
+    missing.forEach(id=>document.getElementById('q'+id).classList.add('unanswered'));
+    document.getElementById('q'+missing[0]).scrollIntoView({behavior:'smooth',block:'center'});
+    return false;
+  }
+  saveAnswers();
+  document.getElementById('savedBanner').style.display='flex';
+  renderResult(counts, totalYes, true);
+  return true;
+}
+
+// 每题作答后检查：108题全部选完则自动提交
+let submitted = false;
+function checkAutoSubmit(){
+  if(submitted) return;
+  const {missing} = collectCounts();
+  if(missing.length === 0){
+    submitted = true;
+    setTimeout(()=>doSubmit(), 400);
+  }
+}
+
+// 展开/收起另外两型
+document.getElementById('moreBtn').addEventListener('click', function(){
+  const box=document.getElementById('moreTypes');
+  if(box.style.display==='block'){
+    box.style.display='none';
+    this.textContent=this.dataset.label||'🔍 查看相关性较高的另外两个型';
+  }else{
+    box.style.display='block';
+    this.textContent='收起另外两个型';
+    box.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+});
+
+// 重置
+function doReset(){
+  submitted=false;
+  for(let id=1; id<=108; id++){
+    document.querySelectorAll('input[name="q'+id+'"]').forEach(i=>i.checked=false);
+    document.getElementById('q'+id).classList.remove('unanswered');
+  }
+  document.getElementById('result').style.display='none';
+  document.getElementById('empty-msg').style.display='none';
+  document.getElementById('structure').style.display='none';
+  document.getElementById('moreTypes').style.display='none';
+  document.getElementById('savedBanner').style.display='none';
+  clearAnswers();
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// 提示条按钮 + 页面加载时恢复上次作答
+document.getElementById('viewSavedBtn').addEventListener('click', ()=>{
+  document.getElementById('result').scrollIntoView({behavior:'smooth'});
+});
+document.getElementById('restartBtn').addEventListener('click', ()=>{ doReset(); });
+(function restore(){
+  const a=loadAnswers();
+  if(!a) return;
+  let n=0;
+  for(let id=1;id<=108;id++){
+    if(a[id]){
+      const inp=document.querySelector('input[name="q'+id+'"][value="'+a[id]+'"]');
+      if(inp){ inp.checked=true; n++; }
+    }
+  }
+  if(n===0) return;
+  updateProgress();
+  document.getElementById('savedBanner').style.display='flex';
+  const {counts, totalYes, missing}=collectCounts();
+  if(!missing.length){ submitted=true; renderResult(counts, totalYes, false); }
+})();
+
+</script>
+</body>
+</html>
